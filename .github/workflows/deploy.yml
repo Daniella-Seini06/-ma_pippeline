@@ -1,0 +1,51 @@
+name: Mon pipeline CI CD
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  verification:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Recuperer le projet
+        uses: actions/checkout@v6
+
+      - name: Verifier les fichiers
+        run: |
+          test -f index.html
+          test -f style.css
+          test -f script.js
+
+      - name: Verifier JavaScript
+        run: node --check script.js
+
+  deploiement:
+    needs: verification
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Recuperer le projet
+        uses: actions/checkout@v6
+
+      - name: Configurer GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Preparer le site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: "."
+
+      - name: Publier le site
+        id: deployment
+        uses: actions/deploy-pages@v4
